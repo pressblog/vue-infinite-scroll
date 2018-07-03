@@ -1,6 +1,12 @@
-const ctx = '@@InfiniteScroll';
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(global.infiniteScroll = factory());
+}(this, (function () { 'use strict';
 
-var getScrollTop = function (element) {
+var ctx = '@@InfiniteScroll';
+
+var getScrollTop = function getScrollTop(element) {
   if (element === window) {
     return Math.max(window.pageYOffset || 0, document.documentElement.scrollTop);
   }
@@ -8,7 +14,7 @@ var getScrollTop = function (element) {
   return element.scrollTop;
 };
 
-var getVisibleHeight = function (element) {
+var getVisibleHeight = function getVisibleHeight(element) {
   if (element === window) {
     return document.documentElement.clientHeight;
   }
@@ -16,14 +22,14 @@ var getVisibleHeight = function (element) {
   return element.clientHeight;
 };
 
-var getElementTop = function (element) {
+var getElementTop = function getElementTop(element) {
   if (element === window) {
     return getScrollTop(window);
   }
   return element.getBoundingClientRect().top + getScrollTop(window);
 };
 
-var doCheck = function (force) {
+var doCheck = function doCheck(force) {
   var scrollEventTarget = this.scrollEventTarget;
   var element = this.el;
   var distance = this.distance;
@@ -47,10 +53,10 @@ var doCheck = function (force) {
   }
 };
 
-var throttle = function (fn, delay) {
+var throttle = function throttle(fn, delay) {
   var now, lastExec, timer, context, args; //eslint-disable-line
 
-  var execute = function () {
+  var execute = function execute() {
     fn.apply(context, args);
     lastExec = now;
   };
@@ -71,7 +77,7 @@ var throttle = function (fn, delay) {
       if (diff < 0) {
         execute();
       } else {
-        timer = setTimeout(() => {
+        timer = setTimeout(function () {
           execute();
         }, diff);
       }
@@ -83,7 +89,7 @@ var throttle = function (fn, delay) {
 
 var getComputedStyle = document.defaultView.getComputedStyle;
 
-var getScrollEventTarget = function (element) {
+var getScrollEventTarget = function getScrollEventTarget(element) {
   var currentNode = element;
   // bugfix, see http://w3help.org/zh-cn/causes/SD9013 and http://stackoverflow.com/questions/17016740/onscroll-function-is-not-working-for-chrome
   while (currentNode && currentNode.tagName !== 'HTML' && currentNode.tagName !== 'BODY' && currentNode.nodeType === 1) {
@@ -96,7 +102,7 @@ var getScrollEventTarget = function (element) {
   return window;
 };
 
-var isAttached = function (element) {
+var isAttached = function isAttached(element) {
   var currentNode = element.parentNode;
   while (currentNode) {
     if (currentNode.tagName === 'HTML') {
@@ -110,7 +116,7 @@ var isAttached = function (element) {
   return false;
 };
 
-var doBind = function () {
+var doBind = function doBind() {
   if (this.binded) return; // eslint-disable-line
   this.binded = true;
 
@@ -178,14 +184,14 @@ var doBind = function () {
   }
 };
 
-export default {
-  bind(el, binding, vnode) {
+var InfiniteScroll$1 = {
+  bind: function bind(el, binding, vnode) {
     el[ctx] = {
-      el,
+      el: el,
       vm: vnode.context,
       expression: binding.value
     };
-    const args = arguments;
+    var args = arguments;
     el[ctx].vm.$on('hook:mounted', function () {
       el[ctx].vm.$nextTick(function () {
         if (isAttached(el)) {
@@ -194,7 +200,7 @@ export default {
 
         el[ctx].bindTryCount = 0;
 
-        var tryBind = function () {
+        var tryBind = function tryBind() {
           if (el[ctx].bindTryCount > 10) return; //eslint-disable-line
           el[ctx].bindTryCount++;
           if (isAttached(el)) {
@@ -208,10 +214,24 @@ export default {
       });
     });
   },
-
-  unbind(el) {
+  unbind: function unbind(el) {
     if (el && el[ctx] && el[ctx].scrollEventTarget) {
       el[ctx].scrollEventTarget.removeEventListener('scroll', el[ctx].scrollListener);
     }
   }
 };
+
+var install = function install(Vue) {
+  Vue.directive('InfiniteScroll', InfiniteScroll$1);
+};
+
+if (window.Vue) {
+  window.infiniteScroll = InfiniteScroll$1;
+  Vue.use(install); // eslint-disable-line
+}
+
+InfiniteScroll$1.install = install;
+
+return InfiniteScroll$1;
+
+})));
